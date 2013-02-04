@@ -1,0 +1,215 @@
+<?php
+    
+//OK     
+function sample_help($path,$arg)
+{
+    switch($path)
+    {
+        case 'admin/help#sample':
+        {
+            $ret_val='<h3>'.t('about').'</h3>';
+            return $ret_val;
+            break;
+        }   
+    }   
+} 
+//Ok   
+
+function sample_permission()
+{
+     return array
+     (
+        'admin sample ' =>array
+        (
+            'title' => t('administrator custom'),
+            'description'=>t('perform admistrative task in sampe Module')
+        )
+     );
+}
+         
+function sample_menu()
+{
+    /*     
+        *access_callbak checks for the user accsss  DEFAULT id user_access 
+    */
+    $item=array();
+    
+    //Admin Configuration Group   required to define menu in admin/config
+    $item['admin/config/sample']=array(
+        'title'=>'SAMPLE',
+        'description'=>'Description',
+        'access arguments'=> array('admin sample')
+    );
+    
+    //Admin Config Settings
+    $item['admin/config/sample/manage']=array(
+        'title'=>'SAMPLE config Setings',
+        'description'=>'Description',
+        'access arguments'=> array('admin sample'),
+        
+        /*
+        drupal_get_form allows multile form implementation as long as ending with "_form"
+        */
+        'page callback' => 'drupal_get_form',  //takes one arg 
+        'page arguments' => array('sample_admin_settings_form')
+    );
+    return $item;
+    
+}
+
+function sample_admin_settings_form($node,&$form_state)
+{
+    $form=array();
+    
+    $form['overview']=array
+    (
+       '#markup'=>t('this interface added'),
+       '#prefix'=>'<p>',
+       '#suffix'=>'</p>'
+    );
+    $form['gmap']=array
+    (
+       '#title'=>t('Enable gmap'),
+       '#description'=>t('when Enabled gnamep will be rendered'),
+       '#type'=>'checkbox'  ,
+       '#default_value'=>variable_get('gmap',1)
+    );
+    $form['default_center']=array
+    (
+       '#title'=>t('Map Center'),
+       '#description'=>t('location of the cenetr othe map'),
+       '#type'=>'fieldset',
+       '#collapsible'=>true,
+       '#collapsed'=>false  
+    );
+    $form['default_center']['sample_default_center_lat']=array
+    (
+        '#title'=>t('Latitude'),
+        '#default_value'=>variable_get('sample_default_center_lat',1000),
+        '#type'=>"textfield",
+        '#description'=>t('Signed Degrees')
+    );
+    $form['default_center']['sample_default_center_long']=array
+    (
+        '#title'=>t('Latitude'),
+        '#type'=>"textfield",
+        '#default_value'=>-75,
+        '#description'=>t('Signed Degrees')
+    );
+    
+    $options=range(0,20,1);
+    $options[0]=t('0-Furchest');
+    $options[20]=t('20-closests');
+    
+    $form['sample_googlemap_zoomm']=array
+    (
+        '#title'=>t('google MAps Zoom'),
+        '#description'=>t('Default Zoom'),
+        '#type'=>'select',
+        '#default_value'=>8,
+        '#options'=>$options,
+        '#required'=>true
+    );
+    
+    /*
+    //Custom saving using _form_submit
+    $form['submit']=array
+    (
+        '#type'=>'submit',
+        '#value'=>t('save')
+    );
+    return $form;   
+    */
+    
+    return system_settings_form($form); 
+    
+    
+}
+
+function sample_admin_settings_form_validate($node,&$form_state)
+{
+    
+    dpm($form_state['values']);
+    $signed_degree_regx='/^[+-]?\d+(\.\d+)$/';
+    $lat=$form_state['values']['sample_default_center_lat'];
+    
+    //if(!preg_match($signed_degree_regx,$lat))
+    //    form_set_error('sample_default_center_lat',t('Invsalid Lat'));
+}
+
+function sample_form_alter(&$form,&$form_state,$form_id)
+{     
+    switch($form_id)
+    {
+        case 'sample_node_form':
+        {
+            dpm($form);  
+            $form['#validate'][]= 'sample_node_form_validate';
+            break;
+        }
+    }      
+}
+
+//validate sample 
+function sample_node_form_validate($form,&$form_state)
+{
+    //dpm($form_state);
+    
+    $val=$form_state["values"]["sample_unit_count"][LANGUAGE_NONE][0]["value"];
+    
+    if(!is_numeric($val) || !intval($val))
+        form_set_error('sample_unit_count','is not Numeric');
+}
+
+//remove  it to make use of SYSTEM ACTION   for saving
+/*function sample_admin_settings_form_submit($node,&$form_state)
+{
+   $form_state['rebuild']=true;
+   variable_set('gmap',$form_state['values']['gmap']) ;
+   variable_set('sample_default_center_lat',$form_state['values']['sample_default_center_lat'])  ;
+}
+*/
+
+
+
+
+
+
+
+/*
+function sample_node_view($node,$view_mode,$langcode)
+{
+    if($node->type == 'sample' && $view_mode=='full')
+    {
+        $node->content['sample_gmap']=array
+        (
+            '#markup'=>theme('sample_gmap',array
+            (
+                'node'=>$node
+            )),
+            '#weight'=>100
+        );
+    }
+}                               
+function sample_theme($existing,$type,$theme,$path)
+{     
+      
+    return array
+    (
+        'sample_gmap' =>array
+        (
+            'variables'=>array('node',NULL)
+        )
+    );
+}
+function theme_sample_gmap($variables)
+{
+   //dpm($variables);
+
+   variable_get('sample_gmap');
+   $lat=$variables['node']->sample_lat[LANGUAGE_NONE][0]['value']; 
+   
+   module_load_include('inc','gmap3_tools');
+   //$name=check_plain()
+}
+*/

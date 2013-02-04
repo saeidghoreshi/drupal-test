@@ -1,0 +1,5 @@
+name=sample By RGoreshi
+description = Custom Sample  
+core=7.x
+
+configure= admin/config/sample/manage

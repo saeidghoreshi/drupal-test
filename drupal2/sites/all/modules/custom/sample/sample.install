@@ -1,0 +1,103 @@
+<?php
+
+function sample_install()
+{      $t=get_t();
+    variable_set('gmap',1);
+    variable_set('sample_default_center_lat',1);
+    drupal_set_message($t('Crearted'));
+    
+    
+    //crrate  content Type
+    $content_type=array
+    (
+        'type'=>'sample',
+        'name'=>$t('sample CT'),
+        'description'=>'Description',
+        'title_label'=>$t('Title Name'),
+        'base'=>'node_content',
+        'custom'=>true,
+    );
+    //set remaining settings with default
+    $node_type=node_type_set_defaults($content_type);
+    //save content Type
+    node_type_save($node_type);
+    //add a field to the body
+    node_add_body_field($node_type,$t('Description')) ;
+    
+    $fields=array();
+    $fields['sample_unit_count']=array
+    (
+        'field_name'=>'sample_unit_count',
+        'type'=>'number_integer',
+        //Optional
+        'cardinality' =>1,
+        'settings'=>array
+        (
+            'max_length'=>5
+        )
+    );
+    
+    
+    foreach($fields as $field)
+        field_create_field($field);
+    
+    //create field instances
+    //instabces relates field to the bundle and also define interface how to interact with filed 
+    $instances=array();
+    $instances['sample_unit_count']=array
+    (
+        'field_name'=>'sample_unit_count',
+        'label'=>$t('Number of Units'),
+        'description'=>$t('Description'),
+        'widget'=>array
+        (
+            'type'=>'text_textfield',
+        ),
+        'required'=>true,
+        'settings'=>array
+        (
+            'text_processing'=>0
+        )
+    );
+    
+    foreach($instances as $instance)
+    {
+        $instance['entity_type']='node';
+        $instance['bundle']='sample';
+        field_create_instance($instance);
+    }
+    
+}
+
+function sample_uninstall()
+{   
+    $t=get_t();
+    
+    variable_del('gmap');
+    variable_del('sample_default_center_lat');
+                            
+    $result=db_query('select nid from {node} where {node}.type= :type',array(':type'=>'sample'));
+    $nids=array();
+    foreach($result as $row)
+        $nids[]=$row->nid;
+    
+    node_delete_multiple($nids);
+    drupal_set_message($t('Conents Removed'));  
+    
+    foreach(field_info_instances('node','sample') as $fieldname => $instance)
+    {
+        field_delete_field($fieldname);
+        field_delete_instance($instance);
+    }
+    drupal_set_message($t('sample fields and instancs removed'));  
+    
+    node_type_delete('sample');
+    drupal_set_message($t('Content Deleted'));
+    
+    field_purge_batch(1000);    
+    drupal_set_message($t('clean up fields'));
+    
+      
+    drupal_set_message($t('Uninstalled'));
+    
+}
